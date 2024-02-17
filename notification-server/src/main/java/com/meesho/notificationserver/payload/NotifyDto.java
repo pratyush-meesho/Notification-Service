@@ -1,6 +1,7 @@
 package com.meesho.notificationserver.payload;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class NotifyDto {
     private UUID Id;
     private String phoneNumber;

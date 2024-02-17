@@ -5,6 +5,7 @@ import com.meesho.notificationserver.exception.ResourceNotFoundException;
 import com.meesho.notificationserver.payload.NotifyDto;
 import com.meesho.notificationserver.entity.Notify;
 import com.meesho.notificationserver.repository.NotifyRepo;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,17 +23,23 @@ public class NotifyService {
     private ModelMapper modelMapper;
     private Logger logger = LoggerFactory.getLogger(NotifyService.class);
     public NotifyDto saveNotification (NotifyDto notifyDto){
-        if(notifyDto.getPhoneNumber().isEmpty()){
-            throw new InvalidRequestException("INVALID_REQUEST","phone Number is Mandatory");
+        NotifyDto savednotifyDto = NotifyDto.builder().build();
+        if( notifyDto.getPhoneNumber()==null|| notifyDto.getPhoneNumber().isEmpty() || notifyDto.getPhoneNumber().isBlank()){
+            throw new InvalidRequestException("INVALID_REQUEST","Phone number is mandatory");
         }
-        Notify notify = this.modelMapper.map(notifyDto,Notify.class);
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        notify.setCreatedAt(currentDateTime);
-        notify.setStatus("sent");
-        Notify savedNotify  = notifyRepo.save(notify);
-        logger.info(String.format("notification saved in db for the phone number %s with the unique id %s",notify.getPhoneNumber(),notify.getId()));
-        NotifyDto  savedNotifyDto = this.modelMapper.map(savedNotify,NotifyDto.class);
-        return savedNotifyDto;
+        try {
+            Notify notify = this.modelMapper.map(notifyDto, Notify.class);
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            notify.setCreatedAt(currentDateTime);
+            notify.setStatus("sent");
+            Notify savedNotify = notifyRepo.save(notify);
+            logger.info(String.format("notification saved in db for the phone number %s with the unique id %s", notify.getPhoneNumber(), notify.getId()));
+            savednotifyDto = this.modelMapper.map(savedNotify, NotifyDto.class);
+        }
+        catch(Exception nex){
+            logger.error("could not save the number due to some internal error , StackTrace {}", ExceptionUtils.getStackTrace(nex));
+        }
+        return savednotifyDto;
 
     }
     public void deleteNotification(UUID requestID){
