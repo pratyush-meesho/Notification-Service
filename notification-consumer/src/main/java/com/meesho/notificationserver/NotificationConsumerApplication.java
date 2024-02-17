@@ -20,9 +20,5 @@ public class NotificationConsumerApplication {
 	public ModelMapper modelMapper(){
 		return new ModelMapper();
 	}
-	@Bean
-	public RestTemplate restTemplate(RestTemplateBuilder builder) {
-		return builder.build();
-	}
 
 }

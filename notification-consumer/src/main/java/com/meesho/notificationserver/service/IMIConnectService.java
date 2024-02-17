@@ -1,10 +1,14 @@
 package com.meesho.notificationserver.service;
 
 import com.meesho.notificationserver.entity.Notify;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.*;
@@ -12,7 +16,11 @@ import java.util.*;
 @Service
 public class IMIConnectService {
     private final RestTemplate restTemplate;
-    @Autowired
+    private static final Logger logger = LoggerFactory.getLogger(IMIConnectService.class);
+
+    @Value("${imiconnectservice.header.value}")
+    private String header_value;
+
     public IMIConnectService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -36,11 +44,12 @@ public class IMIConnectService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         // Add your custom header here
-        headers.set("Your-Header-Name", "Your-Header-Value");
-
+        headers.set("Key", header_value);
         // Create HTTP entity with headers and request body
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
-        restTemplate.postForEntity(apiUrl, requestEntity, Void.class);
+        ResponseEntity<?> x = restTemplate.postForEntity(apiUrl, requestEntity,Void.class);
+        logger.info("The response body is this {}",x);
+
     }
 
 

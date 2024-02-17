@@ -20,6 +20,7 @@ import java.util.UUID;
 @Data
 @Document(indexName = "sms" )
 public class Sms {
+    @Id
     private UUID id;
     private String phoneNumber;
     private String message;

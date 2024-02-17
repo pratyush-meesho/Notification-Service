@@ -22,10 +22,10 @@ import java.util.List;
 public class MonitorController {
     @Autowired
     ElasticService elasticService;
-    private Logger logger = LoggerFactory.getLogger(MonitorController.class);
+    private final Logger logger = LoggerFactory.getLogger(MonitorController.class);
     @GetMapping("")
     public ResponseEntity<?> findAllValues(@RequestParam(value = "from") LocalDateTime from, @RequestParam(value = "to")LocalDateTime to){
-        logger.info("Find all value from from_date  to to_data ",MonitorController.class);
+        logger.info("Find all value from start date to end date:");
         List<Sms> sms_list = elasticService.findByStartDateAndEndDateForCreation(from,to);
         return new ResponseEntity<>(sms_list, HttpStatus.ACCEPTED);
     }
