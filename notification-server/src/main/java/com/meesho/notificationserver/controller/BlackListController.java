@@ -1,6 +1,6 @@
 package com.meesho.notificationserver.controller;
-import com.meesho.notificationserver.payload.ApiResponse;
-import com.meesho.notificationserver.payload.ApiResponseData;
+import com.meesho.notificationserver.payload.NotifyApiResponse;
+import com.meesho.notificationserver.payload.NotifyApiResponseData;
 import com.meesho.notificationserver.payload.PhoneNumberList;
 import com.meesho.notificationserver.service.BlackListService;
 import jakarta.ws.rs.BadRequestException;
@@ -29,8 +29,8 @@ public class BlackListController {
         }
         catch(BadRequestException bex){
             logger.error("got bad request");
-            ApiResponseData apiResponseData = new ApiResponseData("ERROR","Received bad request");
-            ApiResponse apiResponse = new ApiResponse(apiResponseData);
+            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
+            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
             return new ResponseEntity<>("Got bad request",HttpStatus.BAD_REQUEST);
         }
     }
@@ -42,8 +42,8 @@ public class BlackListController {
         }
         catch(BadRequestException bex){
             logger.error("got bad request");
-            ApiResponseData apiResponseData = new ApiResponseData("ERROR","Received bad request");
-            ApiResponse apiResponse = new ApiResponse(apiResponseData);
+            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
+            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
             return new ResponseEntity<>("Got bad request",HttpStatus.BAD_REQUEST);
         }
     }
