@@ -33,8 +33,8 @@ public class ElasticServiceImplTest {
         // Arrange
         LocalDateTime startDateTime = LocalDateTime.now();
         LocalDateTime endDateTime = startDateTime.plusHours(1);
-        Sms sms = Sms.builder().id(UUID.randomUUID()).createdAt(startDateTime).message("hi").phoneNumber("1234").build();
-        Sms sms2 = Sms.builder().id(UUID.randomUUID()).createdAt(startDateTime).message("hi").phoneNumber("1234").build();
+        Sms sms = Sms.builder().id(UUID.randomUUID()).createdAt(startDateTime).message("hi").phoneNumber("1234567897").build();
+        Sms sms2 = Sms.builder().id(UUID.randomUUID()).createdAt(startDateTime).message("hi").phoneNumber("1234556789").build();
         List<Sms> expectedSmsList = new ArrayList<>();
         expectedSmsList.add(sms);
         expectedSmsList.add(sms2);
@@ -44,7 +44,7 @@ public class ElasticServiceImplTest {
     }
     @Test
     public void testFindByStartDateAndEndDateForUpdate() throws Exception {
-        // Arrange
+
         LocalDateTime startDateTime = LocalDateTime.now();
         LocalDateTime endDateTime = startDateTime.plusHours(1);
 
@@ -64,7 +64,6 @@ public class ElasticServiceImplTest {
 
     @Test
     public void testFindByStringContaining() throws Exception {
-        // Arrange
         String smallMessage = "hi";
         Sms sms = Sms.builder().id(UUID.randomUUID()).message("hi").phoneNumber("1234").build();
         Sms sms2 = Sms.builder().id(UUID.randomUUID()).message("hi2").phoneNumber("1234").build();

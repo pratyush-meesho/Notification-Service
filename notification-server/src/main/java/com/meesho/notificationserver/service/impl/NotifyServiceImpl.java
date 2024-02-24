@@ -14,6 +14,7 @@ import com.meesho.notificationserver.service.ProducerService;
 import com.meesho.notificationserver.utils.CheckHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.KafkaException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -46,7 +47,7 @@ public class NotifyServiceImpl implements NotifyService {
         Notify notify = this.modelMapper.map(notifyDto, Notify.class);
         LocalDateTime currentDateTime = LocalDateTime.now();
         notify.setCreatedAt(currentDateTime);
-        notify.setStatus("sent");
+
         Notify savedNotify = notifyRepo.save(notify);
         NotifyDto savednotifyDto = NotifyDto.builder().
                 id(savedNotify.getId())
@@ -54,9 +55,23 @@ public class NotifyServiceImpl implements NotifyService {
                 .phoneNumber(savedNotify.getPhoneNumber())
                 .createdAt(savedNotify.getCreatedAt()).build();
         String payload = objectMapper.writeValueAsString(savednotifyDto);
-        log.info(savedNotify.toString(), savednotifyDto.toString());
-        producerService.sendMessage(payload, AppConstants.TOPIC_NAME);
-        log.info("notification saved in db for the phone number {} with the unique id {}", notify.getPhoneNumber(), notify.getId());
+        log.info("notification saved in db for the phone number {} with the message {}", notify.getPhoneNumber(), notify.getMessage());
+        try {
+            producerService.sendMessage(payload, AppConstants.TOPIC_NAME);
+            notify.setStatus(AppConstants.STATUS_SENT);
+            notifyRepo.save(notify);
+            log.info("notification send successful with phone number {}", notify.getPhoneNumber());
+        } catch (KafkaException kex) {
+            notify.setStatus(AppConstants.STATUS_FAILED);
+            notifyRepo.save(notify);
+            log.info("notification send failed due to Kafka Exception for phone number {}", notify.getPhoneNumber());
+
+        } catch (Exception ex) {
+            notify.setStatus(AppConstants.STATUS_FAILED);
+            notifyRepo.save(notify);
+            log.info("notification send failed due some unexpected Exception for phone number {}", notify.getPhoneNumber());
+            throw ex;
+        }
         return savednotifyDto;
 
     }

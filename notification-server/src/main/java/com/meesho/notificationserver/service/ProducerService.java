@@ -22,7 +22,7 @@ public class ProducerService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendMessage(String payload, String topic) {
+    public void sendMessage(String payload, String topic){
         try {
             ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, payload);
             CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(producerRecord);
@@ -30,10 +30,7 @@ public class ProducerService {
             log.info("message successfully sent to the topic");
         } catch (KafkaException kex) {
             log.error("Unable to send message to kafka with Stack trace: {}", ExceptionUtils.getStackTrace(kex));
-            return;
-        } catch (Exception ex) {
-            log.error("An unexpected error occurred while sending the message {} with Stack trace {}", ex.getMessage(), ExceptionUtils.getStackTrace(ex));
-            return;
+            throw kex;
         }
     }
 }

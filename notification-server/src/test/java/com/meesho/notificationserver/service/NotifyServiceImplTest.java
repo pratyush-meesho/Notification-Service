@@ -41,7 +41,7 @@ class NotifyServiceImplTest {
     private NotifyDto notifyDto;
     private Notify notifyEntity;
     @Test
-    public void saveNotification_Success() throws JsonProcessingException, PhoneNumberInvalidException {
+    public void saveNotification_Success() throws Exception {
 
         //Mockito.when(modelMapper.map(Mockito.eq(NotifyDto.class), Mockito.eq(Notify.class))).thenReturn(Mockito.any(Notify.class));
         Mockito.when(modelMapper.map(Mockito.any(NotifyDto.class), Mockito.eq(Notify.class))).thenReturn(notifyEntity);
