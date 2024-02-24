@@ -1,9 +1,13 @@
 package com.meesho.notificationserver.controller;
 
-import com.meesho.notificationserver.payload.*;
-import com.meesho.notificationserver.service.ProducerService;
+import com.meesho.notificationserver.exception.InvalidRequestException;
+import com.meesho.notificationserver.exception.PhoneNumberInvalidException;
+import com.meesho.notificationserver.exception.ResourceNotFoundException;
+import com.meesho.notificationserver.payload.dto.NotifyDto;
+import com.meesho.notificationserver.payload.response.NotifyApiResponse;
+import com.meesho.notificationserver.payload.response.NotifyFailureApiResponse;
+import com.meesho.notificationserver.payload.response.NotifySuccessApiResponse;
 import com.meesho.notificationserver.service.NotifyService;
-import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.LoggerFactory;
@@ -11,8 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,92 +22,74 @@ import java.util.UUID;
 public class NotifyController {
     NotifyService notifyService;
     private final Logger logger = LoggerFactory.getLogger(NotifyController.class);
-    public NotifyController(ProducerService producerService,NotifyService notifyService){
+
+    public NotifyController(NotifyService notifyService) {
         this.notifyService = notifyService;
     }
+
     @PostMapping("/send")
-    public ResponseEntity<Map<String,Object>>sendNotification(@RequestBody NotifyDto notifyDto){
+    public ResponseEntity<NotifyApiResponse> sendNotification(@RequestBody NotifyDto notifyDto) {
         try {
             logger.info("[POST] notify dto accepted");
             NotifyDto savedNotifyDto = notifyService.saveNotification(notifyDto);
-            //ApiResponseData apiResponseData = new ApiResponseData(savedNotifyDto.getPhoneNumber(), "Successfully message created and sent");
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>Apiresp = new HashMap<>();
-            Apiresp.put("requestId",savedNotifyDto.getId());
-            Apiresp.put("comments","Successfully sent");
-            resp.put("data",Apiresp);
-            //ApiResponse apiResponse = new ApiResponse(apiResponseData);
-            return new ResponseEntity<>(resp, HttpStatus.CREATED);
-        }
-
-        catch( BadRequestException ex){
-            logger.error("Bad request Exception while sending notification, StackTrace : {}",ExceptionUtils.getStackTrace(ex));
-            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
-            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>apiResp = new HashMap<>();
-            apiResp.put("code","INVALID_REQUEST");
-            apiResp.put("message","Received bad request");
-            resp.put("error",apiResp);
-            return new ResponseEntity<>(resp,HttpStatus.BAD_REQUEST);
-        }
-        catch (Exception ex){
-            logger.error("Some Internal Server Error occurred, Stack :{}",ExceptionUtils.getStackTrace(ex));
-           NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Got internal server error");
-           NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>apiResp = new HashMap<>();
-            apiResp.put("code","INTERNAL_SERVER_ERROR");
-            apiResp.put("message","Internal server has occurred");
-            resp.put("error",apiResp);
-            logger.error("Resource not found exception , StackTrace {}", ExceptionUtils.getStackTrace(ex));
-            return new ResponseEntity<>(resp,HttpStatus.INTERNAL_SERVER_ERROR);
+            NotifySuccessApiResponse.NotifySuccessApiResponseData notifySuccessApiResponseData = NotifySuccessApiResponse.NotifySuccessApiResponseData.builder()
+                    .comments("Successfully sent").requestId(savedNotifyDto.getId().toString()).build();
+            NotifySuccessApiResponse notifySuccessApiResponse = NotifySuccessApiResponse.builder().notifySuccessApiResponseData(notifySuccessApiResponseData).build();
+            return new ResponseEntity<>(notifySuccessApiResponse, HttpStatus.CREATED);
+        } catch (InvalidRequestException ex) {
+            logger.error("Invalid Request Exception while sending notification, StackTrace : {}", ExceptionUtils.getStackTrace(ex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("INVALID_REQUEST").message("Received Invalid Request Exception").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.BAD_REQUEST);
+        } catch (PhoneNumberInvalidException ex) {
+            logger.error("PhoneNumberInvalidException occurred with message {}, StackTrace: {}", ex.getMessage(), ExceptionUtils.getStackTrace(ex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("INVALID_REQUEST").message("Invalid Phone Number").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            logger.error("Some Internal Server Error occurred, Stack :{}", ExceptionUtils.getStackTrace(ex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("INTERNAL_SERVER_ERROR").message("Internal server has occurred").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
 
     }
+
     @DeleteMapping("/{requestId}")
-    public ResponseEntity<Map<String,Object>>deleteNotification(@PathVariable("requestId")UUID requestId){
+    public ResponseEntity<NotifyApiResponse> deleteNotification(@PathVariable("requestId") UUID requestId) {
         logger.info("[DELETE] request Id accepted");
         try {
             notifyService.deleteNotification(requestId);
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>Apiresp = new HashMap<>();
-            Apiresp.put("requestId",requestId);
-            Apiresp.put("comments","Successfully deleted");
-            resp.put("data",Apiresp);
-            //ApiResponse apiResponse = new ApiResponse(apiResponseData);
-            //ApiResponseData apiResponseData = new ApiResponseData(requestId.toString(), "Successfully Deleted");
-            //ApiResponse apiResponse = new ApiResponse(apiResponseData);
-            //return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-            return new ResponseEntity<>(resp, HttpStatus.OK);
+            NotifySuccessApiResponse.NotifySuccessApiResponseData notifySuccessApiResponseData = NotifySuccessApiResponse.NotifySuccessApiResponseData.builder()
+                    .comments("Successfully deleted").requestId(requestId.toString()).build();
+            NotifySuccessApiResponse notifySuccessApiResponse = NotifySuccessApiResponse.builder().notifySuccessApiResponseData(notifySuccessApiResponseData).build();
+            return new ResponseEntity<>(notifySuccessApiResponse, HttpStatus.OK);
+        } catch (InvalidRequestException ex) {
+            logger.error("Invalid Request Exception while sending notification, StackTrace : {}", ExceptionUtils.getStackTrace(ex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("INVALID_REQUEST").message("Received Invalid Request Exception").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.BAD_REQUEST);
+        } catch (ResourceNotFoundException rex) {
+            logger.error("Resource not found Exception, StackTrace : {}", ExceptionUtils.getStackTrace(rex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("RESOURCE_NOT_FOUND").message("The Resource not found, so unable to delete").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            logger.error("Some Internal Server Error occurred, Stack :{}", ExceptionUtils.getStackTrace(ex));
+            NotifyFailureApiResponse.NotifyFailureApiResponseData notifyFailureApiResponseData = NotifyFailureApiResponse.NotifyFailureApiResponseData.builder()
+                    .code("INTERNAL_SERVER_ERROR").message("Internal server has occurred").build();
+            NotifyFailureApiResponse notifyFailureApiResponse = NotifyFailureApiResponse.builder().notifyFailureApiResponseData(notifyFailureApiResponseData).build();
+            return new ResponseEntity<>(notifyFailureApiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        catch(BadRequestException ex){
-            logger.error("Bad request Exception while sending notification, StackTrace : {}",ExceptionUtils.getStackTrace(ex));
-            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
-            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>apiResp = new HashMap<>();
-            apiResp.put("code","INVALID_REQUEST");
-            apiResp.put("message","Received bad request");
-            resp.put("error",apiResp);
-            return new ResponseEntity<>(resp,HttpStatus.BAD_REQUEST);
-        }
-        catch (Exception ex){
-            logger.error("Some Internal Server Error occurred, Stack :{}",ExceptionUtils.getStackTrace(ex));
-            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
-            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            Map<String,Object>resp = new HashMap<>();
-            Map<String,Object>apiResp = new HashMap<>();
-            apiResp.put("code","INTERNAL_SERVER_ERROR");
-            apiResp.put("message","Internal server has occurred");
-            resp.put("error",apiResp);
-            logger.error("Resource not found exception , StackTrace {}", ExceptionUtils.getStackTrace(ex));
-            return new ResponseEntity<>(resp,HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
 
     }
-
 
 
 }

@@ -1,9 +1,10 @@
 package com.meesho.notificationserver.controller;
-import com.meesho.notificationserver.payload.NotifyApiResponse;
-import com.meesho.notificationserver.payload.NotifyApiResponseData;
-import com.meesho.notificationserver.payload.PhoneNumberList;
-import com.meesho.notificationserver.service.BlackListService;
-import jakarta.ws.rs.BadRequestException;
+
+import com.meesho.notificationserver.exception.InvalidRequestException;
+import com.meesho.notificationserver.exception.PhoneNumberInvalidException;
+import com.meesho.notificationserver.payload.dto.PhoneNumberListDto;
+import com.meesho.notificationserver.service.impl.BlackListServiceImpl;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,36 +16,41 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/blacklist")
 public class BlackListController {
 
-    BlackListService blackListService;
+    BlackListServiceImpl blackListServiceImpl;
     private final Logger logger = LoggerFactory.getLogger(BlackListController.class);
-    public BlackListController(BlackListService blackListService){
-        this.blackListService = blackListService;
+
+    public BlackListController(BlackListServiceImpl blackListServiceImpl) {
+        this.blackListServiceImpl = blackListServiceImpl;
     }
+
     @PostMapping("")
-    public ResponseEntity<String>addNum(@RequestBody PhoneNumberList phoneNumberList){
+    public ResponseEntity<String> addNum(@RequestBody PhoneNumberListDto phoneNumberListDto) {
         try {
             logger.info("phone number list accepted");
-            blackListService.AddPhoneNumberList(phoneNumberList.getPhoneNumbers());
+            blackListServiceImpl.addPhoneNumberList(phoneNumberListDto.getPhoneNumbers());
             return new ResponseEntity<>("Successfully BlackListed", HttpStatus.CREATED);
+        } catch (InvalidRequestException bex) {
+            logger.error("InvalidRequestException occurred, StackTrace: {}", ExceptionUtils.getStackTrace(bex));
+            return new ResponseEntity<>(bex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (PhoneNumberInvalidException pex) {
+            logger.error("Phone Number Invalid, StackTrace: {}", ExceptionUtils.getStackTrace(pex));
+            return new ResponseEntity<>(pex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        catch(BadRequestException bex){
-            logger.error("got bad request");
-            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
-            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            return new ResponseEntity<>("Got bad request",HttpStatus.BAD_REQUEST);
-        }
+
+
     }
+
     @DeleteMapping("/del")
-    public ResponseEntity<String>DelNum(@RequestBody PhoneNumberList phoneNumberList){
+    public ResponseEntity<String> delNum(@RequestBody PhoneNumberListDto phoneNumberListDto) {
         try {
-            blackListService.DeletePhoneNumberList(phoneNumberList.getPhoneNumbers());
+            blackListServiceImpl.deletePhoneNumberList(phoneNumberListDto.getPhoneNumbers());
             return new ResponseEntity<>("Successfully WhiteListed", HttpStatus.CREATED);
-        }
-        catch(BadRequestException bex){
-            logger.error("got bad request");
-            NotifyApiResponseData apiResponseData = new NotifyApiResponseData("ERROR","Received bad request");
-            NotifyApiResponse notifyApiResponse = new NotifyApiResponse(apiResponseData);
-            return new ResponseEntity<>("Got bad request",HttpStatus.BAD_REQUEST);
+        } catch (InvalidRequestException bex) {
+            logger.error("InvalidRequestException occurred, StackTrace: {}", ExceptionUtils.getStackTrace(bex));
+            return new ResponseEntity<>(bex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (PhoneNumberInvalidException pex) {
+            logger.error("Phone Number Invalid, StackTrace: {}", ExceptionUtils.getStackTrace(pex));
+            return new ResponseEntity<>(pex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

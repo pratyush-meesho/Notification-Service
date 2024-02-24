@@ -12,7 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import static org.junit.jupiter.api.Assertions.*;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +34,7 @@ public class ProducerServiceTest {
         CompletableFuture<SendResult<String, String>> completableFuture = new CompletableFuture<>();
         completableFuture.complete(mock(SendResult.class));
         when(kafkaTemplate.send(Mockito.any(ProducerRecord.class))).thenReturn(completableFuture);
-        producerService.SendMessage(payload, topic);
+        producerService.sendMessage(payload, topic);
         Mockito.verify(kafkaTemplate, Mockito.times(1)).send(expectedProducerRecord);
     }
 
@@ -44,7 +44,7 @@ public class ProducerServiceTest {
         String payload = "testPayload";
         String topic = "testTopic";
         when(kafkaTemplate.send(Mockito.any(ProducerRecord.class))).thenThrow(new KafkaException("Simulated KafkaException"));
-        producerService.SendMessage(payload, topic);
+        producerService.sendMessage(payload, topic);
         Mockito.verify(kafkaTemplate, Mockito.times(1)).send(Mockito.any(ProducerRecord.class));
 
     }
@@ -55,7 +55,7 @@ public class ProducerServiceTest {
         String payload = "testPayload";
         String topic = "testTopic";
         when(kafkaTemplate.send(Mockito.any(ProducerRecord.class))).thenThrow(new RuntimeException("Simulated RuntimeException"));
-        producerService.SendMessage(payload, topic);
+        producerService.sendMessage(payload, topic);
         Mockito.verify(kafkaTemplate, Mockito.times(1)).send(Mockito.any(ProducerRecord.class));
     }
 }
